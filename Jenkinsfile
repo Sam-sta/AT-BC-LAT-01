@@ -22,7 +22,7 @@ pipeline {
 
         stage('build app image') {
             when {
-                branch: 'main'
+                branch "main"
             }
             steps {
                 sh "sudo docker build -t $IMAGE_NAME:$BUILD_NUMBER ."
@@ -31,7 +31,7 @@ pipeline {
 
         stage('docker-hub login') {
             when {
-                branch: 'main'
+                branch "main"
             }
             environment {
                 DOCKERHUB_CREDS = credentials('Dockerhub-login')
@@ -43,7 +43,7 @@ pipeline {
 
         stage('tag image') {
             when {
-                branch: 'main'
+                branch "main"
             }
             steps {
                 sh "sudo docker tag $IMAGE_NAME:$BUILD_NUMBER $TARGET_IMAGE:$IMAGE_NAME$BUILD_NUMBER"
@@ -52,7 +52,7 @@ pipeline {
 
         stage('push image') {
             when {
-                branch: 'main'
+                branch "main"
             }
             steps {
                 sh "sudo docker push $TARGET_IMAGE:$IMAGE_NAME$BUILD_NUMBER"
