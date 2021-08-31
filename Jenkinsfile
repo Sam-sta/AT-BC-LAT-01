@@ -59,7 +59,7 @@ pipeline {
                 always {
                     script {
                         sh "sudo docker rmi -f $TARGET_IMAGE"
-                        sh "sudo docker rmi -f $TIMAGE_NAME"
+                        sh "sudo docker rmi -f $IMAGE_NAME"
                         sh "sudo docker logout"
                     }
                 }
