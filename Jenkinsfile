@@ -15,6 +15,9 @@ pipeline {
         }
 
         stage('build app image') {
+            when {
+                branch "main"
+            }
             steps {
                 sh "sudo docker build -t $IMAGE_NAME:$BUILD_NUMBER ."
             }
@@ -29,13 +32,26 @@ pipeline {
             }
         }
 
+        stage('lint fix'){
+            steps {
+                sh "npm run lint-fix"
+            }
+        }
+
         stage('tag image') {
+            when {
+                branch "main"
+            }
             steps {
                 sh "sudo docker tag $IMAGE_NAME:$BUILD_NUMBER $TARGET_IMAGE:$IMAGE_NAME$BUILD_NUMBER"
             }
         }
 
+
         stage('push image') {
+            when {
+                branch "main"
+            }
             steps {
                 sh "sudo docker push $TARGET_IMAGE:$IMAGE_NAME$BUILD_NUMBER"
             }
