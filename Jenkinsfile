@@ -1,7 +1,7 @@
 pipeline {
     agent {label 'linux'}
     environment {
-        IMAGE_NAME = "msmapp:$BUILD_NUMBER"
+        IMAGE_NAME = "msmapp$BUILD_NUMBER"
         TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME"
         DOCKERHUB_CREDS = credentials('Dockerhub-login')
     }
