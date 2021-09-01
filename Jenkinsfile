@@ -111,6 +111,9 @@ pipeline {
             post {
                 always {
                     script {
+                        sh "sudo docker stop test"
+                        sh "sudo docker rm test"
+                        sh "sudo docker rmi $NEXUS_REPO_IMAGE"
                         sh "sudo docker logout $NEXUS_SERVER_URL"
                     }
                 }
