@@ -9,6 +9,7 @@ pipeline {
         PRIVATE_IMAGE_NAME = "$NEXUS_SERVER_URL/$IMAGE_NAME"
         NEXUS_CREDS = credentials("Nexus-creds")
         WORKSPACE = "/home/vagrant/vagrant_folder/workspace/app-multibranched_changes_Samuel@2"
+        NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
     }
     tools {
         nodejs 'NodeJS 14.17.5'
@@ -63,7 +64,7 @@ pipeline {
             }
         }
 
-        stage('docker-hub login') {
+        stage('nexus login') {
             // when {
             //     branch "main"
             // }
@@ -83,6 +84,33 @@ pipeline {
                 always {
                     script {
                         sh "sudo docker rmi -f $PRIVATE_IMAGE_NAME"
+                        sh "sudo docker logout $NEXUS_SERVER_URL"
+                    }
+                }
+            }
+        }
+
+        //Continuous Deployment pipeline
+
+        stage('Nexus login') {
+            steps {
+                sh "sudo docker login -u $NEXUS_CREDS_USR -p $NEXUS_CREDS_PSW $NEXUS_SERVER_URL"
+            }
+        }
+
+        stage('Pull image from nexus repository') {
+            steps {
+                sh "sudo docker pull $NEXUS_REPO_IMAGE"
+            }
+        }
+
+        stage('Run container app') {
+            steps {
+                sh "sudo docker run -d --name test -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/home/keys --network atnet $IMAGE_NAME"
+            }
+            post {
+                always {
+                    script {
                         sh "sudo docker logout $NEXUS_SERVER_URL"
                     }
                 }
