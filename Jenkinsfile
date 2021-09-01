@@ -113,7 +113,7 @@ pipeline {
                     script {
                         sh "sudo docker stop test"
                         sh "sudo docker rm test"
-                        sh "sudo docker rmi $NEXUS_REPO_IMAGE"
+                        sh "sudo docker rmi -f 9ae86a94082a"
                         sh "sudo docker logout $NEXUS_SERVER_URL"
                     }
                 }
