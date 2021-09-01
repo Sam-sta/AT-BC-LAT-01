@@ -98,15 +98,15 @@ pipeline {
             }
         }
 
-        stage('Pull image from nexus repository') {
-            steps {
-                sh "sudo docker pull $NEXUS_REPO_IMAGE"
-            }
-        }
+        // stage('Pull image from nexus repository') {
+        //     steps {
+        //         sh "sudo docker pull $NEXUS_REPO_IMAGE"
+        //     }
+        // }
 
         stage('Run container app') {
             steps {
-                sh "sudo docker run -d --name test -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/home/keys --network atnet $IMAGE_NAME"
+                sh "sudo docker run -d --name test -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/home/keys --network atnet $NEXUS_REPO_IMAGE"
             }
             post {
                 always {
