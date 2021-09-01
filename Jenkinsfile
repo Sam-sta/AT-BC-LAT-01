@@ -5,6 +5,9 @@ pipeline {
         TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME"
         DOCKERHUB_CREDS = credentials('Dockerhub-login')
         PROJECT_NAME = "msm-node-app"
+        NEXUS_SERVER_URL = "10.0.2.15:8082"
+        PRIVATE_IMAGE_NAME = "$NEXUS_SERVER_URL/$IMAGE_NAME"
+        NEXUS_CREDS = credentials("Nexus-creds")
     }
     tools {
         nodejs 'NodeJS 14.17.5'
@@ -36,45 +39,42 @@ pipeline {
         }
 
         stage('build app image') {
-            when {
-                branch "main"
-            }
+            // when {
+            //     branch "main"
+            // }
             steps {
-                sh "sudo docker build -t $IMAGE_NAME ."
+                sh "sudo docker build -t $PRIVATE_IMAGE_NAME ."
+            }
+            post {
+                failure {
+                    script {
+                        sh "sudo docker rmi \$(docker images --filter dangling=true -q)"
+                    }
+                }
             }
         }
 
         stage('docker-hub login') {
-            when {
-                branch "main"
-            }
+            // when {
+            //     branch "main"
+            // }
             steps {
-                sh "sudo docker login -u $DOCKERHUB_CREDS_USR -p $DOCKERHUB_CREDS_PSW"
-            }
-        }
-
-        stage('tag image') {
-            when {
-                branch "main"
-            }
-            steps {
-                sh "sudo docker tag $IMAGE_NAME $TARGET_IMAGE"
+                sh "sudo docker login -u $NEXUS_CREDS_USR -p $NEXUS_CREDS_PSW $NEXUS_SERVER_URL"
             }
         }
 
         stage('push image') {
-            when {
-                branch "main"
-            }
+            // when {
+            //     branch "main"
+            // }
             steps {
-                sh "sudo docker push $TARGET_IMAGE"
+                sh "sudo docker push $PRIVATE_IMAGE_NAME"
             }
             post {
                 always {
                     script {
-                        sh "sudo docker rmi -f $TARGET_IMAGE"
-                        sh "sudo docker rmi -f $IMAGE_NAME"
-                        sh "sudo docker logout"
+                        sh "sudo docker rmi -f $PRIVATE_IMAGE_NAME"
+                        sh "sudo docker logout $NEXUS_SERVER_URL"
                     }
                 }
             }
