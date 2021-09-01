@@ -8,6 +8,7 @@ pipeline {
         NEXUS_SERVER_URL = "10.0.2.15:8082"
         PRIVATE_IMAGE_NAME = "$NEXUS_SERVER_URL/$IMAGE_NAME"
         NEXUS_CREDS = credentials("Nexus-creds")
+        WORKSPACE = "/home/vagrant/vagrant_folder/workspace/app-multibranched_changes_Samuel@2"
     }
     tools {
         nodejs 'NodeJS 14.17.5'
