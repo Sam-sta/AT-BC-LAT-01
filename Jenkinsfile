@@ -26,7 +26,7 @@ pipeline {
             steps {
                 script {
                     def scannerHome = tool 'SonarQube Scanner'
-                    def scannerParameters = "-Dsonar.projectName=$PROJECT_NAME -Dsonar.projectKey=$PROJECT_NAME" +
+                    def scannerParameters = "-Dsonar.projectName=$PROJECT_NAME -Dsonar.projectKey=$PROJECT_NAME " +
                     "-Dsonar.sources=. -Dsonar.javascrip.lcov.reportPaths=coverage/lcov.info"
                     withSonarQubeEnv('sonarqube-automation') {
                         sh "${scannerHome}/bin/sonar-scanner ${scannerParameters}"
