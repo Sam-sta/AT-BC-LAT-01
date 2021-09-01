@@ -4,6 +4,7 @@ pipeline {
         IMAGE_NAME = "msmapp$BUILD_NUMBER"
         TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME"
         DOCKERHUB_CREDS = credentials('Dockerhub-login')
+        PROJECT_NAME = "msm-node-app"
     }
     tools {
         nodejs 'NodeJS 14.17.5'
@@ -21,37 +22,50 @@ pipeline {
             }
         }
 
+        stage('static code analysis with sonarqube') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarQube Scanner'
+                    def scannerParameters = "-Dsonar.projectName=$PROJECT_NAME -Dsonar.projectKey=$PROJECT_NAME" +
+                    "-Dsonar.sources=. -Dsonar.javascrip.lcov.reportPaths=coverage/lcov.info"
+                    withSonarQubeEnv('sonarqube-automation') {
+                        sh "${scannerHome}/bin/sonar-scanner ${scannerParameters}"
+                    }
+                }
+            }
+        }
+
         stage('build app image') {
-            // when {
-            //     branch "main"
-            // }
+            when {
+                branch "main"
+            }
             steps {
                 sh "sudo docker build -t $IMAGE_NAME ."
             }
         }
 
         stage('docker-hub login') {
-            // when {
-            //     branch "main"
-            // }
+            when {
+                branch "main"
+            }
             steps {
                 sh "sudo docker login -u $DOCKERHUB_CREDS_USR -p $DOCKERHUB_CREDS_PSW"
             }
         }
 
         stage('tag image') {
-            // when {
-            //     branch "main"
-            // }
+            when {
+                branch "main"
+            }
             steps {
                 sh "sudo docker tag $IMAGE_NAME $TARGET_IMAGE"
             }
         }
 
         stage('push image') {
-            /*when {
+            when {
                 branch "main"
-            }*/
+            }
             steps {
                 sh "sudo docker push $TARGET_IMAGE"
             }
