@@ -104,15 +104,26 @@ pipeline {
         //     }
         // }
 
-        stage('Run container app') {
+        stage('Deploy stage') {
             steps {
-                sh "sudo docker run -d --name test -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/home/keys --network stack_atnet $NEXUS_REPO_IMAGE"
+                sh "sudo docker run -d --name test$BUILD_NUMBER -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/home/keys --network stack_atnet $NEXUS_REPO_IMAGE"
+            }
+        }
+
+        stage('User acceptance test') {
+            environment {
+                API_BASE_URL = "http://10.0.2.15"
+                PORT = "3000"
+                SCENARIO_OPTION = "scenario/123456789"
+            }
+            steps {
+                sh "curl -I $API_BASE_URL:$PORT/$CENARIO_OPTION --silent | grep 200"
             }
             post {
                 always {
                     script {
-                        sh "sudo docker stop test"
-                        sh "sudo docker rm test"
+                        sh "sudo docker stop test$BUILD_NUMBER"
+                        sh "sudo docker rm test$BUILD_NUMBER"
                         sh "sudo docker rmi -f 9ae86a94082a"
                         sh "sudo docker logout $NEXUS_SERVER_URL"
                     }
