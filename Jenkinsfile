@@ -129,7 +129,7 @@ pipeline {
                     script {
                         sh "sudo docker stop test$BUILD_NUMBER"
                         sh "sudo docker rm test$BUILD_NUMBER"
-                        sh "sudo docker rmi -f $NEXUS_IMAGE_NAME"
+                        sh "sudo docker rmi -f $NEXUS_REPO_IMAGE"
                         sh "sudo docker logout $NEXUS_SERVER_URL"
                     }
                 }
