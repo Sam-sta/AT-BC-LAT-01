@@ -9,7 +9,6 @@ pipeline {
         PRIVATE_IMAGE_NAME = "$NEXUS_SERVER_URL/$IMAGE_NAME"
         NEXUS_CREDS = credentials("Nexus-creds")
         WORKSPACE = "/home/vagrant/vagrant_folder/workspace/app-multibranched_changes_Samuel@2"
-        NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
     }
     tools {
         nodejs 'NodeJS 14.17.5'
@@ -93,6 +92,9 @@ pipeline {
         //Continuous Deployment pipeline
 
         stage('Nexus login') {
+            environment {
+                NEXUS_CREDS = credentials("Nexus-creds")
+            }
             steps {
                 sh "sudo docker login -u $NEXUS_CREDS_USR -p $NEXUS_CREDS_PSW $NEXUS_SERVER_URL"
             }
@@ -115,6 +117,9 @@ pipeline {
                 API_BASE_URL = "http://10.0.2.15"
                 PORT = "3000"
                 SCENARIO_OPTION = "scenario/123456789"
+                IMAGE_NAME = "msmapp$BUILD_NUMBER"
+                NEXUS_SERVER_URL = "10.0.2.15:8082"
+                NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
             }
             steps {
                 sh "curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"
@@ -124,7 +129,7 @@ pipeline {
                     script {
                         sh "sudo docker stop test$BUILD_NUMBER"
                         sh "sudo docker rm test$BUILD_NUMBER"
-                        sh "sudo docker rmi -f 9ae86a94082a"
+                        sh "sudo docker rmi -f $NEXUS_IMAGE_NAME"
                         sh "sudo docker logout $NEXUS_SERVER_URL"
                     }
                 }
