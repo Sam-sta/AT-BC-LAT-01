@@ -100,12 +100,6 @@ pipeline {
             }
         }
 
-        // stage('Pull image from nexus repository') {
-        //     steps {
-        //         sh "sudo docker pull $NEXUS_REPO_IMAGE"
-        //     }
-        // }
-
         stage('Deploy stage') {
             environment {
                 NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
@@ -127,15 +121,22 @@ pipeline {
             steps {
                 sh "curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"
             }
-            post {
-                always {
-                    script {
-                        sh "sudo docker stop test$BUILD_NUMBER"
-                        sh "sudo docker rm test$BUILD_NUMBER"
-                        sh "sudo docker rmi -f $NEXUS_REPO_IMAGE"
-                        sh "sudo docker logout $NEXUS_SERVER_URL"
-                    }
-                }
+        }
+
+        stage('Clean VM') {
+            environment {
+                API_BASE_URL = "http://10.0.2.15"
+                PORT = "3000"
+                SCENARIO_OPTION = "scenario/123456789"
+                IMAGE_NAME = "msmapp$BUILD_NUMBER"
+                NEXUS_SERVER_URL = "10.0.2.15:8082"
+                NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
+            }
+            steps {
+                sh "sudo docker stop test$BUILD_NUMBER"
+                sh "sudo docker rm test$BUILD_NUMBER"
+                sh "sudo docker rmi -f $NEXUS_REPO_IMAGE"
+                sh "sudo docker logout $NEXUS_SERVER_URL"
             }
         }
     }
