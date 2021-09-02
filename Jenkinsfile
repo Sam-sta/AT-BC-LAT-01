@@ -117,7 +117,7 @@ pipeline {
                 SCENARIO_OPTION = "scenario/123456789"
             }
             steps {
-                sh "curl -I $API_BASE_URL:$PORT/$CENARIO_OPTION --silent | grep 200"
+                sh "curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"
             }
             post {
                 always {
