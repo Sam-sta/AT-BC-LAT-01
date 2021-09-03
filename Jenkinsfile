@@ -119,7 +119,8 @@ pipeline {
                 NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
             }
             steps {
-                sh """curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200; exit 0"""
+                sh """curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"""
+                sh "exit 0"
             }
         }
 
