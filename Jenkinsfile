@@ -63,12 +63,12 @@ pipeline {
             }
         }
 
-        stage('nexus login') {
+        stage('dockerhub login') {
             // when {
             //     branch "main"
             // }
             steps {
-                sh "sudo docker login -u $DOCKERHUB_CRED_USR -p $DOCKERHUB_CRED_PSW"
+                sh "sudo docker login -u $DOCKERHUB_CREDS_USR -p $DOCKERHUB_CREDS_PSW"
             }
         }
 
