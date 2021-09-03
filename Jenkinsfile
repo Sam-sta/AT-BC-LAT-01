@@ -77,12 +77,14 @@ pipeline {
             //     branch "main"
             // }
             steps {
+                sh "sudo docker tag $IMAGE_NAME $TARGET_IMAGE"
                 sh "sudo docker push $TARGET_IMAGE"
             }
             post {
                 always {
                     script {
                         sh "sudo docker rmi -f $TARGET_IMAGE"
+                        sh "sudo docker rmi -f $IMAGE_NAME"
                         sh "sudo docker logout"
                     }
                 }
