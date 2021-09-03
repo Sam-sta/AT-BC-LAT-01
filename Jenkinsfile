@@ -109,7 +109,6 @@ pipeline {
             }
         }
 
-        /*
         stage('User acceptance test') {
             environment {
                 API_BASE_URL = "http://10.0.2.15"
@@ -120,10 +119,12 @@ pipeline {
                 NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
             }
             steps {
-                sh """curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"""
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE'){
+                    sh """curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"""
+                }
             }
         }
-        */
+        
         stage('Clean VM') {
             environment {
                 API_BASE_URL = "http://10.0.2.15"
