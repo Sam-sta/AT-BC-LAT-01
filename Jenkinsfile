@@ -1,13 +1,13 @@
 pipeline {
     agent {label 'linux'}
     environment {
+        // NEXUS_SERVER_URL = "10.0.2.15:8082"
+        // PRIVATE_IMAGE_NAME = "$NEXUS_SERVER_URL/$IMAGE_NAME"
+        // NEXUS_CREDS = credentials("Nexus-creds")
         IMAGE_NAME = "msmapp$BUILD_NUMBER"
         TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME"
         DOCKERHUB_CREDS = credentials('Dockerhub-login')
         PROJECT_NAME = "msm-node-app"
-        NEXUS_SERVER_URL = "10.0.2.15:8082"
-        PRIVATE_IMAGE_NAME = "$NEXUS_SERVER_URL/$IMAGE_NAME"
-        NEXUS_CREDS = credentials("Nexus-creds")
         WORKSPACE = "/home/vagrant/vagrant_folder/workspace/app-multibranched_changes_Samuel@2"
     }
     tools {
@@ -52,7 +52,7 @@ pipeline {
             //     branch "main"
             // }
             steps {
-                sh "sudo docker build -t $PRIVATE_IMAGE_NAME ."
+                sh "sudo docker build -t $IMAGE_NAME ."
             }
             post {
                 failure {
@@ -63,12 +63,12 @@ pipeline {
             }
         }
 
-        stage('nexus login') {
+        stage('dockerhub login') {
             // when {
             //     branch "main"
             // }
             steps {
-                sh "sudo docker login -u $NEXUS_CREDS_USR -p $NEXUS_CREDS_PSW $NEXUS_SERVER_URL"
+                sh "sudo docker login -u $DOCKERHUB_CREDS_USR -p $DOCKERHUB_CREDS_PSW"
             }
         }
 
@@ -77,66 +77,114 @@ pipeline {
             //     branch "main"
             // }
             steps {
-                sh "sudo docker push $PRIVATE_IMAGE_NAME"
+                sh "sudo docker tag $IMAGE_NAME $TARGET_IMAGE"
+                sh "sudo docker push $TARGET_IMAGE"
             }
             post {
                 always {
                     script {
-                        sh "sudo docker rmi -f $PRIVATE_IMAGE_NAME"
-                        sh "sudo docker logout $NEXUS_SERVER_URL"
+                        sh "sudo docker rmi -f $TARGET_IMAGE"
+                        sh "sudo docker rmi -f $IMAGE_NAME"
+                        sh "sudo docker logout"
                     }
                 }
             }
         }
 
-        //Continuous Deployment pipeline
+        //Continuous Delivery pipeline
 
-        stage('Nexus login') {
-            environment {
-                NEXUS_CREDS = credentials("Nexus-creds")
-            }
-            steps {
-                sh "sudo docker login -u $NEXUS_CREDS_USR -p $NEXUS_CREDS_PSW $NEXUS_SERVER_URL"
-            }
-        }
-
-        stage('Deploy stage') {
-            environment {
-                NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
-            }
-            steps {
-                sh "sudo docker run -d --name test$BUILD_NUMBER -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/app/keys --network stack_atnet $NEXUS_REPO_IMAGE"
-            }
-        }
-
-        stage('User acceptance test') {
+        stage('Continuous Delivery') {
             environment {
                 API_BASE_URL = "http://10.0.2.15"
                 PORT = "3000"
                 SCENARIO_OPTION = "scenario/123456789"
                 IMAGE_NAME = "msmapp$BUILD_NUMBER"
-                NEXUS_SERVER_URL = "10.0.2.15:8082"
-                NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
+                LOCAL_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME"
+                TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME-prod"
+                DOCKERHUB_CREDS = credentials('Dockerhub-login')
+                // NEXUS_SERVER_URL = "10.0.2.15:8082"
+                // NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
             }
-            steps {
-                sh "curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"
+            stages{
+                stage('Dockerhub-login') {
+                    steps {
+                        sh "sudo docker login -u $DOCKERHUB_CREDS_USR -p $DOCKERHUB_CREDS_PSW"
+                    }
+                }
+
+                stage('Deploy stage') {
+                    steps {
+                        sh "sudo docker run -d --name test$BUILD_NUMBER -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/app/keys --network stack_atnet $LOCAL_IMAGE"
+                    }
+                }
+
+                // stage('User acceptance test') {
+                //     steps {
+                //         sh "curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"
+                //     }
+                // }
+
+                stage('Production tag') {
+                    environment {
+                        TAG = "$BUILD_NUMBER"
+                    }
+                    steps {
+                        sh "sudo docker tag $LOCAL_IMAGE $TARGET_IMAGE"
+                    }
+                }
+
+                stage('Deliver image to production') {
+                    steps {
+                        sh """
+                        echo '$DOCKERHUB_CREDS_PSW' | sudo docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+                        sudo docker push $TARGET_IMAGE
+                        """
+                    }
+                }
+
+                stage('Clean VM') {
+                    steps {
+                        sh "sudo docker stop test$BUILD_NUMBER"
+                        sh "sudo docker rm test$BUILD_NUMBER"
+                        sh "sudo docker rmi -f $TARGET_IMAGE"
+                        sh "sudo docker logout"
+                    }
+                }
             }
         }
 
-        stage('Clean VM') {
+        //Continuous deployment pipeline
+
+        stage('Coninuous deployment') {
             environment {
-                API_BASE_URL = "http://10.0.2.15"
-                PORT = "3000"
-                SCENARIO_OPTION = "scenario/123456789"
-                IMAGE_NAME = "msmapp$BUILD_NUMBER"
-                NEXUS_SERVER_URL = "10.0.2.15:8082"
-                NEXUS_REPO_IMAGE = "$NEXUS_SERVER_URL/$IMAGE_NAME"
+                SSH = "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER"
+                TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME-prod"
+                DB_KEY = "/home/vagrant/vagrant_folder/workspace/keys/metal-slug-maker-firebase-adminsdk-dlyl0-cf40e5f52d.json"
             }
-            steps {
-                sh "sudo docker stop test$BUILD_NUMBER"
-                sh "sudo docker rm test$BUILD_NUMBER"
-                sh "sudo docker rmi -f $NEXUS_REPO_IMAGE"
-                sh "sudo docker logout $NEXUS_SERVER_URL"
+            stages {
+                stage('copy key to server') {
+                    steps {
+                        sshagent(['aws-key']) {
+                            sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER mkdir -p keys"
+                            sh "scp $DB_KEY $PROD_SERVER:/home/ubuntu/keys"
+                            sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER ls /home/ubuntu/keys"
+                        }
+                    }
+                }
+
+                stage('deploy in production') {
+                    steps {
+                        sshagent(['aws-key']) {
+                            sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker rm -f test"
+                            sh """
+                            ssh -o 'StrictHostKeyChecking no' $PROD_SERVER echo '$DOCKERHUB_CREDS_PSW' | $SSH sudo docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+                            ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker pull $TARGET_IMAGE
+                            """
+                            sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker run -d --name test -p 3000:3000 -v /home/ubuntu/keys:/app/keys $TARGET_IMAGE"
+                            sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker logout"
+                        }
+                    }
+                }
             }
         }
     }
