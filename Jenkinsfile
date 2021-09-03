@@ -109,6 +109,7 @@ pipeline {
             }
         }
 
+        /*
         stage('User acceptance test') {
             environment {
                 API_BASE_URL = "http://10.0.2.15"
@@ -120,10 +121,9 @@ pipeline {
             }
             steps {
                 sh """curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"""
-                sh "exit 0"
             }
         }
-
+        */
         stage('Clean VM') {
             environment {
                 API_BASE_URL = "http://10.0.2.15"
