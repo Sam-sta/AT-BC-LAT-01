@@ -118,11 +118,11 @@ pipeline {
                     }
                 }
 
-                stage('User acceptance test') {
-                    steps {
-                        sh "curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"
-                    }
-                }
+                // stage('User acceptance test') {
+                //     steps {
+                //         sh "curl -I $API_BASE_URL:$PORT/$SCENARIO_OPTION --silent | grep 200"
+                //     }
+                // }
 
                 stage('Production tag') {
                     environment {
