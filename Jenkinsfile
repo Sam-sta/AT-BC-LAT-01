@@ -157,6 +157,7 @@ pipeline {
 
         stage('Coninuous deployment') {
             environment {
+                SSH = "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER"
                 TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME-prod"
                 DB_KEY = "/home/vagrant/vagrant_folder/workspace/keys/metal-slug-maker-firebase-adminsdk-dlyl0-cf40e5f52d.json"
             }
@@ -176,7 +177,7 @@ pipeline {
                         sshagent(['aws-key']) {
                             sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker rm -f test"
                             sh """
-                            ssh -o 'StrictHostKeyChecking no' $PROD_SERVER echo '$DOCKERHUB_CREDS_PSW' | sudo docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+                            ssh -o 'StrictHostKeyChecking no' $PROD_SERVER echo '$DOCKERHUB_CREDS_PSW' | $SSH sudo docker login -u $DOCKERHUB_CREDS_USR --password-stdin
                             ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker pull $TARGET_IMAGE
                             """
                             sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker run -d --name test -p 3000:3000 -v /home/ubuntu/keys:/app/keys $TARGET_IMAGE"
