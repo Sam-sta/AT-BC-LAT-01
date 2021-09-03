@@ -175,8 +175,10 @@ pipeline {
                     steps {
                         sshagent(['aws-key']) {
                             sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker rm -f test"
-                            sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER echo '$DOCKERHUB_CREDS_PSW' | sudo docker login -u $DOCKERHUB_CREDS_USR --password-stdin"
-                            sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker pull $TARGET_IMAGE"
+                            sh """
+                            ssh -o 'StrictHostKeyChecking no' $PROD_SERVER echo '$DOCKERHUB_CREDS_PSW' | sudo docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+                            ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker pull $TARGET_IMAGE
+                            """
                             sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker run -d --name test -p 3000:3000 -v /home/ubuntu/keys:/app/keys $TARGET_IMAGE"
                             sh "ssh -o 'StrictHostKeyChecking no' $PROD_SERVER sudo docker logout"
                         }
