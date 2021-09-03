@@ -114,7 +114,7 @@ pipeline {
 
                 stage('Deploy stage') {
                     steps {
-                        sh "sudo docker run -d --name test$BUILD_NUMBER -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/app/keys --network stack_atnet $NEXUS_REPO_IMAGE"
+                        sh "sudo docker run -d --name test$BUILD_NUMBER -p 3000:3000 -v /home/vagrant/vagrant_folder/workspace/keys:/app/keys --network stack_atnet $LOCAL_IMAGE"
                     }
                 }
 
