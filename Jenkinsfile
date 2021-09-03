@@ -159,7 +159,7 @@ pipeline {
             environment {
                 PROD_SERVER = "ubuntu@ec2-54-174-33-135.compute-1.amazonaws.com"
                 TARGET_IMAGE = "samsta/practice_jenkins:$IMAGE_NAME-prod"
-                DB_KEY = "/home/vagrant/vagrant_file/workspace/keys"
+                DB_KEY = "/home/vagrant/vagrant_file/workspace/keys/metal-slug-maker-firebase-adminsdk-dlyl0-cf40e5f52d.json"
             }
             stages {
                 stage('copy key to server') {
